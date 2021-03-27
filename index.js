@@ -30,7 +30,7 @@ run();
 
 client.on('ready', () => {
   console.log('Bot is up!');
-  client.user.setActivity('!help');
+  client.user.setActivity(`${PREFIX}help`);
 });
 
 client.on('message', async message => {
@@ -50,7 +50,7 @@ client.on('message', async message => {
     states.set(sourceId, newState);
   }
   const state = states.get(sourceId);
-  if (message.content.startsWith(PREFIX)) {
+  if (message.content.startsWith(state.prefix)) {
     switch (command) {
       case 'ping':
         client.commands
@@ -76,9 +76,8 @@ client.on('message', async message => {
           });
         break;
       case 'prefix':
-        break; // Not yet added to new feature
         if (subCommands.length < 1) {
-          message.channel.send('Please specify the prefix');
+          message.channel.send('Specify the prefix');
           return;
         }
         client.commands.get('prefix')
@@ -93,6 +92,7 @@ client.on('message', async message => {
             states.set(sourceId, result.newState);
             message.channel.send(`Prefix has changed to ${result.newState.prefix}`);
           });
+        break;
       case 'play':
         let m;
         if (!message.guild) {
