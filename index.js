@@ -29,7 +29,7 @@ var states = new Map();
 run();
 
 client.on('ready', () => {
-  console.log('Bot is up!');
+  console.log('Bot is up');
   client.user.setActivity(`${PREFIX}help`);
 });
 
