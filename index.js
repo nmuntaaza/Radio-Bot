@@ -9,6 +9,9 @@ const {
 const client = new Client({
   partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 });
+
+require('discord-buttons')(client);
+
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (let commandFile of commandFiles) {
@@ -200,6 +203,7 @@ client.on('message', async message => {
         client.commands
           .get('radio')
           .execute({
+            client,
             message,
             args: {
               maxPageList: state.maxPageList,
@@ -250,6 +254,55 @@ client.on('message', async message => {
     }
   }
 });
+
+client.on('clickButton', async (button) => {
+  if (button.clicker.user.bot) return;
+  if (!button.message.guild) return;
+  if (button.message.author.id != client.user.id) return;
+  
+  const sourceId = button.message.guild.id;
+  let state = states.get(sourceId);
+
+  const radioListLength = await radioService.count(mongoClient);
+
+  button.defer();
+  if (button.id == 'nextPageButton') {
+    state.radioPagination = state.radioPagination == Math.ceil(radioListLength / state.maxPageList) ? state.radioPagination : state.radioPagination + 1
+    client.commands
+      .get('radio')
+      .execute({
+        client,
+        message: button.message,
+        args: {
+          maxPageList: state.maxPageList,
+          radioPagination: state.radioPagination,
+          currentPlayed: state.currentPlayed,
+          mongoClient
+        }
+      })
+      .then(result => {
+        console.log(result.message);
+      })
+  }
+  if (button.id == 'previousPageButton') {
+    state.radioPagination = state.radioPagination == 1 ? state.radioPagination : state.radioPagination - 1;
+    client.commands
+      .get('radio')
+      .execute({
+        client,
+        message: button.message,
+        args: {
+          maxPageList: state.maxPageList,
+          radioPagination: state.radioPagination,
+          currentPlayed: state.currentPlayed,
+          mongoClient
+        }
+      })
+      .then(result => {
+        console.log(result.message);
+      })
+  }
+})
 
 client.on('messageReactionAdd', async (reaction, user) => {
   const sourceId = reaction.message.guild ? reaction.message.guild.id : reaction.message.author.id;

@@ -1,6 +1,7 @@
 const {
   MessageEmbed
 } = require('discord.js');
+const { MessageButton } = require('discord-buttons');
 const radioService = require('../services/radio');
 const userRadioService = require('../services/user-radio');
 
@@ -22,8 +23,10 @@ module.exports = {
           maxPageList,
           mongoClient
         } = args;
-        const radioList = [...await radioService.find(mongoClient), ...await userRadioService.find(mongoClient, { guildId: reaction ? reaction.message.guild.id : message.guild.id })];
+        const radioList = [...await radioService.find(mongoClient), ...await userRadioService.find(mongoClient, { guildId: message.guild.id })];
         const radioListLength = radioList.length;
+        const backButton = new MessageButton().setStyle('grey').setLabel('Back').setID('previousPageButton');
+        const nextButton = new MessageButton().setStyle('grey').setLabel('Next').setID('nextPageButton');
 
         let text = currentPlayed ? `🎵 **Playing ${currentPlayed} Now** 🎵\n\n` : '';
         for (let i = (radioPagination - 1) * maxPageList; i < (radioPagination) * maxPageList; i++) {
@@ -31,26 +34,33 @@ module.exports = {
           text += `**[${i + 1}]** ${radioList[i].name} ${radioList[i].genre ? '| ' + radioList[i].genre : ''}\n`;
         }
         const embedMsg = new MessageEmbed().setDescription(text.trim());
-        if (!reaction) {
-          await (await message.channel.send(embedMsg)).react('⬇️');
-          resolve({
-            message: `Sent radio list page ${radioPagination} @${message.guild.name}-${message.guild.id}`
-          })
-        } else {
-          const maxPagination = Math.ceil(radioListLength / maxPageList);
-          if (radioPagination == 1) {
-            await (await reaction.message.reactions.removeAll()).react('⬇️');
-          } else if (radioPagination > 1 && radioPagination < maxPagination) {
-            const m = await (await reaction.message.reactions.removeAll()).edit(embedMsg);
-            await m.react('⬇️');
-            await m.react('⬆️');
+        const maxPagination = Math.ceil(radioListLength / maxPageList);
+        if (radioPagination == 1) {
+          if (message.author.id != client.user.id) {
+            await (await message.channel.send({
+              embed: embedMsg,
+              buttons: [backButton.setDisabled(), nextButton]
+            }))
           } else {
-            await (await (await reaction.message.reactions.removeAll()).edit(embedMsg)).react('⬆️');
+            await (await message.edit({
+              embed: embedMsg,
+              buttons: [backButton.setDisabled(), nextButton]
+            }))
           }
-          resolve({
-            message: `Sent radio list page ${radioPagination} @${reaction.message.guild.name}-${reaction.message.guild.id}`
-          })
+        } else if (radioPagination > 1 && radioPagination < maxPagination) {
+          const m = await (await message.edit({
+            embed: embedMsg,
+            buttons: [backButton, nextButton]
+          }))
+        } else {
+          await (await message.edit({
+            embed: embedMsg,
+            buttons: [backButton, nextButton.setDisabled()]
+          }))
         }
+        resolve({
+          message: `Sent radio list page ${radioPagination} @${message.guild.name}-${message.guild.id}`
+        })
       } catch (error) {
         console.error('Error @Commands.Radio.Execute():', error);
         console.error('Args:', args);
