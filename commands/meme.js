@@ -1,6 +1,8 @@
 const memeService = require('../services/meme');
 const {
-  MessageAttachment
+  MessageAttachment,
+  MessageActionRow,
+  MessageButton
 } = require('discord.js');
 
 module.exports = {
@@ -19,12 +21,22 @@ module.exports = {
           if (!memes.nfsw) {
             const attachment = new MessageAttachment(memes.url);
             try {
-              await (await message.channel.send(attachment))
-                .react('🔄');
+              const sendMoreAction = new MessageActionRow()
+                .addComponents(
+                  new MessageButton()
+                    .setCustomId('sendMoreMeme')
+                    .setLabel('More')
+                    .setStyle('PRIMARY')
+                );
+              if (message.author.bot) {
+                await (await message.edit({ files: [attachment], components: [sendMoreAction] }));
+              } else {
+                await (await message.channel.send({ files: [attachment], components: [sendMoreAction] }));
+              }
             } catch (error) {
               console.error(error);
               message.channel
-                .send('Timeout');
+                .send( { content: 'Timeout'} );
             }
             resolve({
               subReddit: args.subReddit,
@@ -36,7 +48,7 @@ module.exports = {
         })
         .catch(error => {
           console.error('Error @Commands.Meme.Execute():', error);
-          message.channel.send(error.message);
+          message.channel.send({ content: error.message });
         })
     })
   }

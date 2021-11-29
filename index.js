@@ -263,19 +263,6 @@ client.on('messageReactionAdd', async (reaction, user) => {
   if (!reaction.message.guild) return;
   if (reaction.message.author.id != client.user.id) return;
 
-  if (reaction.emoji.name == '🔄') {
-    client.commands.get('meme')
-      .execute({
-        message: reaction.message,
-        args: {
-          subReddit: state.lastMemeSubReddit
-        }
-      })
-      .then(result => {
-        state.lastMemeSubReddit = result.subReddit;
-      });
-  }
-
   if (reaction.emoji.name == '⬇️' || reaction.emoji.name == '⬆️') {
     const radioListLength = await radioService.count(mongoClient);
     state.radioPagination = reaction.emoji.name == '⬇️' ?
@@ -308,19 +295,6 @@ client.on('messageReactionRemove', async (reaction, user) => {
   if (!reaction.message.guild) return;
   if (reaction.message.author.id != client.user.id) return;
 
-  if (reaction.emoji.name == '🔄') {
-    client.commands.get('meme')
-      .execute({
-        message: reaction.message,
-        args: {
-          subReddit: state.lastMemeSubReddit
-        }
-      })
-      .then(result => {
-        state.lastMemeSubReddit = result.subReddit;
-      });
-  }
-
   if (reaction.emoji.name == '⬇️' || reaction.emoji.name == '⬆️') {
     const radioListLength = await radioService.count(mongoClient);
     state.radioPagination = reaction.emoji.name == '⬇️' ?
@@ -340,6 +314,24 @@ client.on('messageReactionRemove', async (reaction, user) => {
       .then(result => {
         console.log(result.message);
       })
+  }
+});
+
+client.on('interactionCreate', interaction => {
+  if (!interaction.isButton()) return;
+  const sourceId = interaction.message.guild ? interaction.message.guild.id : interaction.message.author.id;
+  const state = states.get(sourceId);
+  if (interaction.customId == 'sendMoreMeme') {
+    client.commands.get('meme')
+      .execute({
+        message: interaction.message,
+        args: {
+          subReddit: state.lastMemeSubReddit
+        }
+      })
+      .then(result => {
+        state.lastMemeSubReddit = result.subReddit;
+      });
   }
 });
 

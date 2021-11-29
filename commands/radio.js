@@ -32,7 +32,7 @@ module.exports = {
         }
         const embedMsg = new MessageEmbed().setDescription(text.trim());
         if (!reaction) {
-          await (await message.channel.send(embedMsg)).react('⬇️');
+          await (await message.channel.send({ embeds: [embedMsg] })).react('⬇️');
           resolve({
             message: `Sent radio list page ${radioPagination} @${message.guild.name}-${message.guild.id}`
           })

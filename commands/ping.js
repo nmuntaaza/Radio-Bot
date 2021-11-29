@@ -9,7 +9,7 @@ module.exports = {
   }) {
     return new Promise((resolve, reject) => {
       message.channel
-        .send('Pong!')
+        .send({ content: 'Pong!' })
         .then(m => {
           resolve({
             message: 'Sent ping'
