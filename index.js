@@ -331,6 +331,7 @@ client.on('interactionCreate', interaction => {
       })
       .then(result => {
         state.lastMemeSubReddit = result.subReddit;
+        interaction.deferUpdate();
       });
   }
 });
