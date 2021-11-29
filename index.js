@@ -3,11 +3,13 @@ require('dotenv').config();
 const fs = require('fs');
 const {
   Client,
-  Collection
+  Collection,
+  Intents
 } = require('discord.js');
 
 const client = new Client({
-  partials: ['MESSAGE', 'CHANNEL', 'REACTION']
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]
 });
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -33,7 +35,7 @@ client.on('ready', () => {
   client.user.setActivity('!help');
 });
 
-client.on('message', async message => {
+client.on('messageCreate', async message => {
   if (message.author.bot) return;
   let intervalStream;
   const [command, ...subCommands] = message.content.toLowerCase().slice(1).split(' ');
